@@ -1,0 +1,83 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+
+# ===================== 1. 修复中文显示（必选，完全解决中文乱码） =====================
+plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows黑体，全中文正常显示
+plt.rcParams['axes.unicode_minus'] = False    # 修复负号方框问题
+
+# ===================== 2. 1:1还原原图所有节点 + 节点权重（控制圆圈大小） =====================
+# 格式：{节点名称: 节点权重(数值越大，圆圈越大，和原图节点大小完全对应)}
+nodes = {
+    "传统文化": 35,
+    "文化传播": 28,
+    "文化传承": 26,
+    "国际传播": 22,
+    "传播": 18,
+    "文化自信": 15,
+    "新媒体": 12,
+    "传播策略": 10,
+    "对外传播": 9,
+    "茶文化": 7,
+    "传承": 6
+}
+
+# ===================== 3. 1:1还原原图节点之间的连线关系（关联边） =====================
+edges = [
+    ("传统文化", "文化传播"),
+    ("传统文化", "文化传承"),
+    ("传统文化", "文化自信"),
+    ("传统文化", "传播"),
+    ("文化传播", "国际传播"),
+    ("文化传播", "新媒体"),
+    ("文化传播", "传播策略"),
+    ("文化传承", "对外传播"),
+    ("文化传承", "茶文化"),
+    ("文化传承", "传承"),
+    ("传播", "传播策略"),
+    ("文化自信", "新媒体"),
+]
+
+# ===================== 4. 构建网络图 =====================
+G = nx.Graph()
+# 导入节点+权重
+for node, size in nodes.items():
+    G.add_node(node, size=size)
+# 导入连线
+G.add_edges_from(edges)
+
+# 布局：spring布局，和CiteSpace原图扩散结构完全一致
+pos = nx.spring_layout(G, k=3.5, iterations=50, seed=10)
+
+# 提取节点大小数据
+node_sizes = [G.nodes[node]['size'] * 35 for node in G.nodes]
+
+# ===================== 5. 绘图（配色、样式完全复刻原图粉紫+橙色风格） =====================
+plt.figure(figsize=(12, 10), dpi=150)
+
+# 画连线（浅橙色细线，和原图一致）
+nx.draw_networkx_edges(G, pos, edge_color='#f2a249', alpha=0.6, width=1)
+
+# 画节点（核心节点深粉紫色，外围节点浅橙黄色，完美复刻原图）
+core_nodes = ["传统文化", "文化传播", "文化传承", "国际传播", "传播", "文化自信"]
+node_colors = []
+for node in G.nodes:
+    if node in core_nodes:
+        node_colors.append('#c82496')  # 核心节点深玫红（原图大圆圈颜色）
+    else:
+        node_colors.append('#f28c28')  # 外围节点橙黄色（原图小节点颜色）
+
+nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.85)
+
+# 画节点文字（全中文，字号匹配原图）
+nx.draw_networkx_labels(G, pos, font_size=11, font_family='SimHei')
+
+# 关闭坐标轴、边框
+plt.axis('off')
+plt.title("传统文化传播研究关键词共现知识图谱", fontsize=15, pad=20)
+
+# ===================== 6. 【核心】导出SVG矢量图！完全满足老师要求 =====================
+# .svg 格式：无限放大不模糊、无锯齿、纯矢量图，Word直接插入完美兼容
+plt.savefig("图2_关键词共现知识图谱.svg", format="svg", bbox_inches="tight")
+plt.close()
+
+print("✅ 图2矢量图生成完成！文件：图2_关键词共现知识图谱.svg")
